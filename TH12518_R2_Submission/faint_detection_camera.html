@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Faint Detection Demo</title>
+  <style>
+    body { margin:0; display:flex; flex-direction:column; align-items:center; }
+    #canvas { border:2px solid black; }
+    #hud { position:absolute; top:20px; left:20px; padding:10px 20px; background:rgba(0,0,0,0.5); color:#fff; font-size:20px; border-radius:8px; }
+    #log { margin-top:10px; width:640px; height:100px; overflow-y:auto; border:1px solid #ccc; padding:5px; font-size:14px; background:#f9f9f9;}
+  </style>
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
+</head>
+<body>
+  <video id="video" autoplay playsinline style="display:none;"></video>
+  <canvas id="canvas" width="640" height="480"></canvas>
+  <div id="hud">Initializing...</div>
+  <div id="log"></div>
+  <button id="startBtn">Start Camera</button>
+  <button id="stopBtn">Stop Camera</button>
+
+  <script>
+    const video=document.getElementById('video');
+    const canvas=document.getElementById('canvas');
+    const ctx=canvas.getContext('2d');
+    const hud=document.getElementById('hud');
+    const logEl=document.getElementById('log');
+    let camera=null;
+    let faintStart=null;
+    let lastAlertTime=0; // to avoid speaking repeatedly every frame
+
+    function log(msg){
+      logEl.innerHTML+=msg+"<br>";
+      logEl.scrollTop=logEl.scrollHeight;
+    }
+
+    // Voice function
+    function speak(msg){
+      const now = Date.now();
+      if(now - lastAlertTime < 5000) return; // avoid repeating within 5 seconds
+      lastAlertTime = now;
+      const utter = new SpeechSynthesisUtterance(msg);
+      utter.rate = 1;
+      utter.pitch = 1;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
+    }
+
+    function checkFaint(landmarks){
+      const nose=landmarks[0];
+      const leftShoulder=landmarks[11];
+      const rightShoulder=landmarks[12];
+      const leftHip=landmarks[23];
+      const rightHip=landmarks[24];
+      if(!nose||!leftShoulder||!rightShoulder||!leftHip||!rightHip) return false;
+      const hipY=(leftHip.y+rightHip.y)/2;
+      if(nose.y>hipY){
+        if(!faintStart) faintStart=Date.now();
+        else if((Date.now()-faintStart)/1000>3) return true;
+      } else {faintStart=null;}
+      return false;
+    }
+
+    const pose=new Pose({locateFile:(f)=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
+    pose.setOptions({modelComplexity:1,smoothLandmarks:true,minDetectionConfidence:0.5,minTrackingConfidence:0.5});
+    pose.onResults(results=>{
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(results.image,0,0,canvas.width,canvas.height);
+      if(results.poseLandmarks){
+        drawConnectors(ctx,results.poseLandmarks,POSE_CONNECTIONS,{color:'#00ff88',lineWidth:2});
+        drawLandmarks(ctx,results.poseLandmarks,{color:'#ff0066',lineWidth:1});
+        if(checkFaint(results.poseLandmarks)){
+          hud.textContent="⚠ FAINT DETECTED!";
+          hud.style.background="rgba(255,0,0,0.6)";
+          log("⚠ ALERT: Possible faint detected!");
+          speak("Alert! Possible faint detected");
+        } else {
+          hud.textContent="Pose detected.";
+          hud.style.background="rgba(0,0,0,0.5)";
+        }
+      } else {
+        hud.textContent="No person detected.";
+      }
+    });
+
+    document.getElementById('startBtn').onclick=()=>{
+      if(!camera){
+        camera=new Camera(video,{onFrame:async()=>{await pose.send({image:video});},width:640,height:480});
+      }
+      camera.start(); log("Camera started.");
+    };
+    document.getElementById('stopBtn').onclick=()=>{
+      if(camera) camera.stop(); log("Camera stopped.");
+    };
+  </script>
+</body>
+</html>

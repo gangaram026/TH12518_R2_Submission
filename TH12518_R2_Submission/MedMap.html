@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MedMap - Healthcare Emergency Services</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <style>
+    /* General Body Styling */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      background: #f4f4f4;
+    }
+
+    /* Header */
+    h1 {
+      background: #007bff;
+      color: white;
+      margin: 0;
+      padding: 15px 0;
+      font-weight: normal;
+    }
+
+    /* Login Form */
+    #loginDiv input {
+      margin: 5px;
+      padding: 8px;
+      width: 200px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    #loginDiv button {
+      margin: 5px;
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    #loginDiv button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Map */
+    #map {
+      height: 500px;
+      max-width: 900px;
+      margin: 20px auto;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+
+    /* Controls Container */
+    .controls {
+      max-width: 900px;
+      margin: 15px auto 30px auto;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    /* SOS Button */
+    #sosButton {
+      background: #dc3545;
+      border: none;
+      color: white;
+      font-size: 18px;
+      padding: 12px 25px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #sosButton:hover {
+      background: #b02a37;
+    }
+
+    /* Logout Button */
+    #logoutBtn {
+      background: #6c757d;
+      border: none;
+      color: white;
+      font-size: 16px;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #logoutBtn:hover {
+      background: #5a6268;
+    }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    .filters label {
+      font-size: 14px;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .filters input[type="checkbox"] {
+      margin-right: 6px;
+      cursor: pointer;
+    }
+
+    /* SOS History Dashboard */
+    #sosHistoryContainer {
+      max-width: 900px;
+      margin: 10px auto;
+      padding: 15px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      text-align: left;
+      font-size: 14px;
+    }
+
+    #sosHistoryContainer h4 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+  <h1>MedMap: Healthcare & Sanitation Navigator</h1>
+
+  <!-- Login / Signup -->
+  <div id="loginDiv" style="text-align:center;margin-top:50px;">
+    <h3>Login / Sign Up</h3>
+    <input type="email" id="email" placeholder="Email" /><br>
+    <input type="password" id="password" placeholder="Password" /><br>
+    <button id="loginBtn">Sign In</button>
+    <button id="signupBtn">Sign Up</button>
+  </div>
+
+  <!-- Map Section (hidden until login) -->
+  <div id="mapDiv" style="display:none;">
+    <div id="map"></div>
+    <div class="controls">
+      <button id="sosButton">🚨 Send SOS</button>
+      <button id="logoutBtn">Logout</button>
+
+      <div class="filters">
+        <label><input type="checkbox" class="filter" value="water" checked /> 💧 Water</label>
+        <label><input type="checkbox" class="filter" value="toilet" checked /> 🚻 Toilets</label>
+        <label><input type="checkbox" class="filter" value="changing" checked /> 👚 Changing Room</label>
+        <label><input type="checkbox" class="filter" value="breastfeeding" checked /> 🧷 Breastfeeding</label>
+        <label><input type="checkbox" class="filter" value="medical" checked /> 🏥 Medical</label>
+      </div>
+    </div>
+
+    <div id="sosHistoryContainer" style="margin-top:15px; max-width:900px; margin:auto;"></div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Firebase JS -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <!-- App Script -->
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAl3fDE6wuB9Twhj8gII2KXn5vae57yLzk",
+      authDomain: "madmap-6dca4.firebaseapp.com",
+      databaseURL: "https://madmap-6dca4-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "madmap-6dca4",
+      storageBucket: "madmap-6dca4.firebasestorage.app",
+      messagingSenderId: "513686100291",
+      appId: "1:513686100291:web:e34cfa89d81b69f789f7f6",
+      measurementId: "G-LY15X3161G"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // DOM elements
+    const loginDiv = document.getElementById('loginDiv');
+    const mapDiv = document.getElementById('mapDiv');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const sosHistoryContainer = document.getElementById('sosHistoryContainer');
+
+    // Login
+    document.getElementById('loginBtn').addEventListener('click', () => {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(userCredential => {
+          showMapScreen(userCredential.user);
+        })
+        .catch(err => alert(err.message));
+    });
+
+    // Signup
+    document.getElementById('signupBtn').addEventListener('click', () => {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(userCredential => {
+          showMapScreen(userCredential.user);
+        })
+        .catch(err => alert(err.message));
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      auth.signOut().then(() => {
+        location.reload();
+      });
+    });
+
+    // Show map screen after login
+    function showMapScreen(user) {
+      loginDiv.style.display = 'none';
+      mapDiv.style.display = 'block';
+
+      // Initialize map
+      const map = L.map('map').setView([12.9716, 77.5946], 13); // Default Bangalore
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Icons
+      const iconUrls = {
+        water: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+        toilet: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-pink.png',
+        changing: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png',
+        breastfeeding: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+        medical: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png'
+      };
+      const iconShadow = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-shadow.png';
+      const createIcon = type => new L.Icon({
+        iconUrl: iconUrls[type] || iconUrls.water,
+        shadowUrl: iconShadow,
+        iconSize: [25,41],
+        iconAnchor: [12,41],
+        popupAnchor: [1,-34],
+        shadowSize: [41,41]
+      });
+
+      // Sample services in Bangalore
+      const serviceLocations = [
+        { lat: 12.9716, lng: 77.5946, type: 'water', name: 'Water Point - MG Road' },
+        { lat: 12.9750, lng: 77.6050, type: 'toilet', name: 'Public Toilet - Cubbon Park' },
+        { lat: 12.9780, lng: 77.5900, type: 'changing', name: 'Changing Room - Forum Mall' },
+        { lat: 12.9725, lng: 77.5930, type: 'breastfeeding', name: 'Mother Care Room - Brigade Rd' },
+        { lat: 12.9735, lng: 77.5960, type: 'medical', name: '🏥 First Aid - Bangalore City' },
+      ];
+
+      let serviceMarkers = [];
+      let userLatLng = null;
+
+      const addMarker = s => {
+        const marker = L.marker([s.lat,s.lng],{icon:createIcon(s.type)})
+          .addTo(map)
+          .bindPopup(`📍 ${s.name} (${s.type})`);
+        serviceMarkers.push(marker);
+      };
+
+      const updateMarkers = selectedTypes => {
+        serviceMarkers.forEach(m=>map.removeLayer(m));
+        serviceMarkers=[];
+        serviceLocations.forEach(s=>{
+          if(selectedTypes.includes(s.type)) addMarker(s);
+        });
+      };
+
+      // Geolocation
+      navigator.geolocation.getCurrentPosition(pos=>{
+        userLatLng = {lat:pos.coords.latitude,lng:pos.coords.longitude};
+        map.setView([userLatLng.lat,userLatLng.lng],15);
+        L.marker([userLatLng.lat,userLatLng.lng]).addTo(map).bindPopup('📍 You are here').openPopup();
+        updateMarkers(Array.from(document.querySelectorAll('.filter:checked')).map(cb=>cb.value));
+      }, err=>{
+        alert('Location unavailable, showing default Bangalore services.');
+        updateMarkers(Array.from(document.querySelectorAll('.filter:checked')).map(cb=>cb.value));
+      });
+
+      document.querySelectorAll('.filter').forEach(cb=>cb.addEventListener('change',()=>updateMarkers(Array.from(document.querySelectorAll('.filter:checked')).map(cb=>cb.value))));
+
+      // SOS button
+      document.getElementById('sosButton').addEventListener('click',()=>{
+        if(!userLatLng){alert('Location not available!'); return;}
+        const timestamp = Date.now();
+        db.ref('sos/'+timestamp).set({
+          user: user.email,
+          latitude: userLatLng.lat,
+          longitude: userLatLng.lng,
+          time: new Date().toISOString()
+        });
+
+        alert('🚨 SOS sent successfully!');
+        loadSosHistory(user);
+      });
+
+      // Load SOS history
+      function loadSosHistory(user){
+        db.ref('sos').orderByChild('user').equalTo(user.email).limitToLast(5).once('value', snap=>{
+          sosHistoryContainer.innerHTML = '<h4>Last 5 SOS:</h4>';
+          snap.forEach(child=>{
+            const s = child.val();
+            const div = document.createElement('div');
+            div.textContent = `${new Date(s.time).toLocaleString()} - Lat: ${s.latitude.toFixed(5)}, Lng: ${s.longitude.toFixed(5)}`;
+            sosHistoryContainer.appendChild(div);
+          });
+        });
+      }
+
+      loadSosHistory(user);
+    }
+  </script>
+</body>
+</html>

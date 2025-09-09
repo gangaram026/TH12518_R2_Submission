@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FacilityCare - Health & Safety Management</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #fff;
+      color: #333;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 40px;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+    }
+    header h1 {
+      font-size: 40px;
+      
+      color: orange;
+    }
+    .login-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    .login-buttons button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s ease;
+    }
+    .login-buttons button:hover {
+      background: #1e4ed8;
+    }
+    .hero {
+      text-align: center;
+      padding: 80px 20px;
+      background: #f9fafb;
+    }
+    .hero h2 {
+      font-size: 32px;
+      font-weight: bold;
+    }
+    .hero span {
+      color: #16a34a;
+    }
+    .hero p {
+      font-size: 16px;
+      margin: 10px auto;
+      max-width: 600px;
+    }
+    .hero .btns {
+      margin-top: 20px;
+    }
+    .hero .btns button {
+      margin: 0 8px;
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .hero .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+    .hero .btn-secondary {
+      background: #f3f4f6;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      padding: 40px;
+    }
+    .feature-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .feature-card h3 {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+    .cta {
+      text-align: center;
+      padding: 60px 20px;
+      background: linear-gradient(to right, #3b82f6, #10b981);
+      color: white;
+    }
+    .cta h2 {
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .cta p {
+      margin: 15px 0;
+      font-size: 16px;
+    }
+    .cta button {
+      background: white;
+      color: #2563eb;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+
+    footer {
+      background: #111827;
+      color: #9ca3af;
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  
+  <header>
+    <h1>Ujjain MahaKhumbh 2028</h1>
+    <div class="login-buttons">
+      <button onclick="location.href='worker.html'">Worker Login</button>
+      <button onclick="location.href='map.html'">Family Login</button>
+      <button onclick="location.href='admin.html'">Admin Login</button>
+      
+    </div>
+  </header>
+
+  <section class="hero">
+    <h2>Smart Facility <span>Safety</span> & <span>Cleanliness</span></h2>
+    <p>Advanced AI-powered monitoring system for health emergencies, cleanliness tracking, and facility management with real-time worker coordination.</p>
+
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="feature-card">
+      <h3>Health Monitoring</h3>
+      <p>AI-powered camera system detects health emergencies and automatically alerts nearby medical facilities with precise location data.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Emergency Response</h3>
+      <p>Instant access to nearby hospitals, emergency contacts, and real-time routing for fastest possible medical response.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Smart Cleanliness</h3>
+      <p>Automated cleanliness detection with real-time worker notifications and task management for optimal facility maintenance.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Worker Management</h3>
+      <p>Streamlined task assignment, token-based rewards, and real-time communication for efficient facility maintenance teams.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Facility Mapping</h3>
+      <p>Interactive maps showing restrooms, water stations, nursing rooms, and other facilities with real-time availability status.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Public Reporting</h3>
+      <p>Easy complaint submission system for the public with photo uploads, priority tracking, and automated task creation.</p>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Ready to Transform Your Facility Management?</h2>
+    <p>Join thousands of facilities already using FacilityCare to enhance safety, cleanliness, and operational efficiency.</p>
+    
+  </section>
+
+  <footer>
+    © 2024 FacilityCare. All rights reserved.
+  </footer>
+</body>
+</html>

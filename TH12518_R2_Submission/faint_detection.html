@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emergency Health Alert</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Emergency Health Alert</h1>
+      <p>Instant medical assistance at your fingertips</p>
+    </div>
+
+    <div class="emergency-options">
+      <button id="faintButton" class="emergency-btn red">Faint Emergency</button>
+    </div>
+
+    <!-- Medicine Suggestions for Fainting -->
+    <div id="faint-medicine-suggestions" class="medicine-suggestions">
+      <h2>Suggested Medicines for Fainting</h2>
+      <ul id="medicines-list-faint"></ul>
+    </div>
+
+    <!-- OpenStreetMap -->
+    <div id="map" class="map"></div>
+
+    <!-- List of Nearby Healthcare Facilities -->
+    <div class="facilities-list-container">
+      <h2>Nearby Healthcare Facilities</h2>
+      <ul id="facilities-list"></ul>
+    </div>
+
+    <div class="contacts">
+      <h2>Emergency Contacts</h2>
+      <p>Emergency: <strong>000</strong></p>
+      <p>Your Doctor: <strong>+61 400 123 456</strong></p>
+      <p>Emergency Contact: <strong>+61 400 789 012</strong></p>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-overpass-layer/dist/OverPassLayer.bundle.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Facility Map with Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f7fb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    /* Auth containers */
+    .auth-container {
+      background: #fff;
+      padding: 30px 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      width: 320px;
+      display: none;
+    }
+    .auth-container.active {
+      display: block;
+    }
+    .auth-container h2 {
+      margin-bottom: 20px;
+      text-align: center;
+      color: #0d6efd;
+    }
+    .auth-container input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #d3dae6;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .auth-container button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 12px;
+      background: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .auth-container button:hover {
+      background: #0b5ed7;
+    }
+    .switch-link {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    .switch-link span {
+      color: #0d6efd;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* Map page */
+    .map-page {
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      height: 100vh;
+      position: relative;
+    }
+    header {
+      background: linear-gradient(90deg, #0d6efd, #0b5ed7);
+      color: white;
+      text-align: center;
+      padding: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header button {
+      background: white;
+      color: #0d6efd;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    main {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      margin-top: 10px;
+      gap: 20px;
+      flex: 1;
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    .map-container {
+      width: 600px;
+      height: 600px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid #e1e6ef;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      overflow: hidden;
+      position: relative;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+    .legend {
+      width: 230px;
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border: 1px solid #e1e6ef;
+    }
+    .legend h2 {
+      font-size: 16px;
+      margin-bottom: 14px;
+      color: #0d6efd;
+      text-align: center;
+      border-bottom: 1px solid #e1e6ef;
+      padding-bottom: 6px;
+    }
+    .legend-items {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .legend-item {
+      background: #f1f6ff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: #0d3b66;
+      font-weight: 500;
+    }
+    .legend-item:hover {
+      background: #e0ecff;
+      transform: translateX(3px);
+    }
+    .icon-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-inner {
+      font-size: 20px;
+      line-height: 1;
+    }
+    @keyframes blink {
+      0%   { transform: scale(1); opacity: 1; }
+      50%  { transform: scale(1.8); opacity: 0.6; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .blink {
+      animation: blink 1s infinite;
+    }
+
+    /* SOS Button */
+    #sos-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: #dc3545;
+      color: white;
+      font-size: 20px;
+      font-weight: 700;
+      padding: 16px 28px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: background 0.3s;
+      z-index: 1000;
+    }
+    #sos-btn:hover {
+      background: #b02a37;
+    }
+    /* SOS Warning Message */
+    #sos-warning {
+      position: absolute;
+      bottom: 90px;
+      right: 20px;
+      background: #ff0000;
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+      padding: 14px 20px;
+      border-radius: 12px;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      animation: blinkWarn 1s infinite;
+      z-index: 1000;
+    }
+    @keyframes blinkWarn {
+      0%   { opacity: 1; }
+      50%  { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Login -->
+  <div class="auth-container active" id="login-box">
+    <h2>Family Login</h2>
+    <input type="text" id="login-username" placeholder="Username" />
+    <input type="password" id="login-password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+    <div class="switch-link">Don’t have an account? <span onclick="showSignup()">Sign Up</span></div>
+    <button onclick="location.href='UI.html'">Home Page</button>
+  </div>
+
+  <!-- Signup -->
+  <div class="auth-container" id="signup-box">
+    <h2>Sign Up</h2>
+    <input type="text" id="signup-username" placeholder="Username" />
+    <input type="password" id="signup-password" placeholder="Password" />
+    <button onclick="signup()">Sign Up</button>
+    <div class="switch-link">Already have an account? <span onclick="showLogin()">Login</span></div>
+  </div>
+
+  <!-- Map Page -->
+  <div class="map-page" id="map-page">
+    <header>
+      <div id="header-title">📍 Facility Map</div>
+      <button onclick="logout()">Logout</button>
+    </header>
+    <main>
+      <div class="map-container">
+        <div id="map"></div>
+        <!-- SOS -->
+        <button id="sos-btn">🚨 SOS</button>
+        <div id="sos-warning">🚨 Emergency has been called!</div>
+      </div>
+      <div class="legend">
+        <h2>Amenities</h2>
+        <div class="legend-items">
+          <div class="legend-item" data-type="restroom">🚻 Restrooms</div>
+          <div class="legend-item" data-type="water">🚰 Water Stations</div>
+          <div class="legend-item" data-type="help">❗ Help Desks</div>
+          <div class="legend-item" data-type="prayer">🕌 Prayer Rooms</div>
+          <div class="legend-item" data-type="emergency">🚨 Emergency Points</div>
+          <div class="legend-item" data-type="changing">👕 Dress Changing Centers</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // --- Auth Logic ---
+    function showLogin() {
+      document.getElementById("signup-box").classList.remove("active");
+      document.getElementById("login-box").classList.add("active");
+    }
+    function showSignup() {
+      document.getElementById("login-box").classList.remove("active");
+      document.getElementById("signup-box").classList.add("active");
+    }
+    function signup() {
+      const username = document.getElementById("signup-username").value.trim();
+      const password = document.getElementById("signup-password").value.trim();
+      if (!username || !password) { alert("Please fill all fields."); return; }
+      if (localStorage.getItem("user_" + username)) { alert("User already exists!"); return; }
+      localStorage.setItem("user_" + username, JSON.stringify({ username, password }));
+      alert("Signup successful! Please login.");
+      showLogin();
+    }
+    function login() {
+      const username = document.getElementById("login-username").value.trim();
+      const password = document.getElementById("login-password").value.trim();
+      const stored = localStorage.getItem("user_" + username);
+      if (!stored) { alert("User not found."); return; }
+      const user = JSON.parse(stored);
+      if (user.password !== password) { alert("Incorrect password."); return; }
+      localStorage.setItem("sessionUser", username);
+      loadMapPage();
+    }
+    function logout() {
+      localStorage.removeItem("sessionUser");
+      location.reload();
+    }
+    window.onload = () => {
+      if (localStorage.getItem("sessionUser")) { loadMapPage(); }
+    };
+
+    // --- Map Logic ---
+    function loadMapPage() {
+      document.getElementById("login-box").classList.remove("active");
+      document.getElementById("signup-box").classList.remove("active");
+      document.getElementById("map-page").style.display = "flex";
+      const username = localStorage.getItem("sessionUser");
+      document.getElementById("header-title").innerText = `📍 Facility Map – Welcome, ${username}`;
+
+      const mapWidth = 1000, mapHeight = 1000;
+      const bounds = [[0, 0], [mapHeight, mapWidth]];
+      const map = L.map('map', {
+        crs: L.CRS.Simple,
+        zoomControl: false,
+        attributionControl: false,
+        minZoom: -1,
+        maxZoom: 2,
+        maxBounds: bounds,
+        maxBoundsViscosity: 1.0
+      });
+      L.imageOverlay('your-map.png', bounds).addTo(map);
+      map.fitBounds(bounds);
+
+      const icons = {
+        restroom: L.divIcon({ html: '<div class="icon-wrapper"><div class="icon-inner">🚻</div></div>', className: '', iconSize: [24, 24] }),
+        water: L.divIcon({ html: '<div class="icon-wrapper"><div class="icon-inner">🚰</div></div>', className: '', iconSize: [24, 24] }),
+        help: L.divIcon({ html: '<div class="icon-wrapper"><div class="icon-inner">❗</div></div>', className: '', iconSize: [24, 24] }),
+        prayer: L.divIcon({ html: '<div class="icon-wrapper"><div class="icon-inner">🕌</div></div>', className: '', iconSize: [26, 26] }),
+        emergency: L.divIcon({ html: '<div class="icon-wrapper"><div class="icon-inner">🚨</div></div>', className: '', iconSize: [24, 24] }),
+        changing: L.divIcon({ html: '<div class="icon-wrapper"><div class="icon-inner">👕</div></div>', className: '', iconSize: [24, 24] })
+      };
+
+       const points = [
+  // 🚻 Restrooms
+  { type: 'restroom', coords: [200, 200], name: 'Restroom A' },
+  { type: 'restroom', coords: [400, 300], name: 'Restroom B' },
+  { type: 'restroom', coords: [600, 250], name: 'Restroom C' },
+  { type: 'restroom', coords: [300, 500], name: 'Restroom D' },
+
+  // 🚰 Water Stations
+  { type: 'water', coords: [250, 450], name: 'Water Station 1' },
+  { type: 'water', coords: [500, 500], name: 'Water Station 2' },
+  { type: 'water', coords: [700, 350], name: 'Water Station 3' },
+
+  // ❗ Help Desks
+  { type: 'help', coords: [350, 200], name: 'Help Desk A' },
+  { type: 'help', coords: [550, 500], name: 'Help Desk B' },
+
+  // 🕌 Prayer Rooms
+  { type: 'prayer', coords: [400, 400], name: 'main prayer hall' },
+ 
+  // 🚨 Emergency Points
+  { type: 'emergency', coords: [150, 150], name: 'Emergency Point A' },
+  { type: 'emergency', coords: [450, 700], name: 'Emergency Point B' },
+  { type: 'emergency', coords: [800, 250], name: 'Emergency Point C' },
+
+  // 👕 Dress Changing Centers (only near river, left side)
+  { type: 'changing', coords: [800, 350], name: 'Changing Center 1' },
+  { type: 'changing', coords: [820, 500], name: 'Changing Center 2' }
+];
+
+
+      const markers = [];
+      points.forEach(p => {
+        const marker = L.marker(p.coords, { icon: icons[p.type] })
+          .addTo(map)
+          .bindPopup(`<strong>${p.name}</strong>`);
+        marker.type = p.type;
+        markers.push(marker);
+      });
+
+      let activeType = null;
+      document.querySelectorAll(".legend-item").forEach(item => {
+        item.addEventListener("click", () => {
+          const type = item.getAttribute("data-type");
+          if (activeType === type) {
+            markers.forEach(m => {
+              const el = m.getElement();
+              if (el) {
+                el.querySelector(".icon-inner")?.classList.remove("blink");
+                el.style.display = "block";
+              }
+            });
+            activeType = null;
+          } else {
+            markers.forEach(m => {
+              const el = m.getElement();
+              if (!el) return;
+              if (m.type === type) {
+                el.querySelector(".icon-inner")?.classList.add("blink");
+                el.style.display = "block";
+              } else {
+                el.querySelector(".icon-inner")?.classList.remove("blink");
+                el.style.display = "none";
+              }
+            });
+            activeType = type;
+          }
+        });
+      });
+
+      // --- SOS Button Logic ---
+      document.getElementById("sos-btn").addEventListener("click", () => {
+        const warning = document.getElementById("sos-warning");
+        warning.innerText = `🚨 Emergency has been called by ${username}!`;
+        warning.style.display = "block";
+        setTimeout(() => { warning.style.display = "none"; }, 5000);
+      });
+    }
+  </script>
+</body>
+</html>
